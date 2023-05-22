@@ -14,20 +14,12 @@ import vertica_python
 
 def load_file(table_name: str, key: str, columns: str):
 
-    conn_info = {'host': 'vertica.tgcloudenv.ru', 
-                 'port': '5433',
-                 'user': 'KOVALCHUKALEXANDERGOOGLEMAILCOM',       
-                 'password': '1HdHMLGej7lSfeR',
-                 'database': 'dwh',
-                 'autocommit': True
-    }
-
     csv_file_path=f'/lessons/dags/data/{key}'
     df = pd.read_csv(csv_file_path)
     df['user_id_from'] = pd.array(df['user_id_from'], dtype="Int64")
     num_rows = len(df)
     chunk_size = num_rows // 10
-    with vertica_python.connect(**conn_info) as conn:
+    with vertica_python.connect(vertica_conn_id='vertica_connection') as conn:
         start = 0
         while start <= num_rows:
             end = min(start + chunk_size, num_rows)
