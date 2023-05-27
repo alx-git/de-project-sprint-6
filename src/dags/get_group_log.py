@@ -12,17 +12,14 @@ import boto3
 
 import vertica_python
 
-def fetch_s3_file(bucket: str, key: str):
-
-    AWS_ACCESS_KEY_ID = Variable.get("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = Variable.get("AWS_SECRET_ACCESS_KEY")
+def fetch_s3_file(bucket: str, key: str, conn_params: dict):
 
     session = boto3.session.Session()
     s3_client = session.client(
         service_name='s3',
         endpoint_url='https://storage.yandexcloud.net',
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_access_key_id=conn_params['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=conn_params['AWS_SECRET_ACCESS_KEY'],
     )
     s3_client.download_file(
         Bucket=bucket,
@@ -33,12 +30,18 @@ def fetch_s3_file(bucket: str, key: str):
 
 @dag(schedule_interval=None, start_date=pendulum.parse('2022-07-13'))
 def dag_get_group_log():
+
+    conn_params = {
+        'AWS_ACCESS_KEY_ID': Variable.get("AWS_ACCESS_KEY_ID"),
+        'AWS_SECRET_ACCESS_KEY': Variable.get("AWS_SECRET_ACCESS_KEY")
+    }
+
     task1_fetch_group_log = PythonOperator(
         task_id='fetch_group_log',
         python_callable=fetch_s3_file,
-        op_kwargs={'bucket': 'sprint6', 'key': 'group_log.csv'},
+        op_kwargs={'bucket': 'sprint6', 'key': 'group_log.csv', 'conn': conn_params},
     )
-
+    
     task1_fetch_group_log
 
 sprint6 = dag_get_group_log()
